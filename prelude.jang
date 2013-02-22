@@ -1,0 +1,62 @@
+List.contains = function(e) {
+    var i = 0;
+    var contained = false;
+    while (i < this.length()) {
+        if (this[i] == e) {
+            return true;
+        }
+        i += 1
+    };
+    return false;
+};
+
+List.find = function(e) {
+    var i = 0;
+    while (i < this.length()) {
+        if (this[i] == e) {
+            return i;
+        }
+        i += 1;
+    };
+    return -1;
+};
+
+List.any = function(f) {
+    var i = 0;
+    while (i < this.length()) {
+        if (f(this[i])) {
+            return true;
+        }
+        i += 1;
+    };
+    return false;
+};
+
+List.all = function(f) {
+    !(this.any(function(e) {!f(e)}))
+};
+
+List.forEach = function(f) {
+    var i = 0;
+    while(i < this.length()) {
+        f(this[i])
+        i += 1
+    }
+}
+
+List.map = function(f) {
+    var result = []
+    this.forEach(function(e) {
+        result.append(f(e))
+    })
+    return result
+}
+
+Object.ownItems = function() {
+    var that = this;
+    return this.items().filter(function(e) {e in that});
+}
+
+String.capitalize = function() {
+    return this[0].toUpper() + this[1:]
+}

@@ -1,0 +1,428 @@
+game.addRoom(new Room({|
+    id: "Darkness",
+    alias: "darkness",
+    predescription: "You are in",
+    description: ("You can hear a faint roaring sound but the bag on your head"
+    + " is muffling sound. Your hands are bound but you can feel the seat you"
+    + " are in.")
+|}))
+
+game.addItem(new Item({|
+    id: "Shape", 
+    alias: "shape",
+    take: function() {
+        tell("You slip the object into your palm. Now that you can feel it in " +
+        "your hand, you can tell it is definitely a paper clip.")
+        game.take("Shape")
+        game.hide("Shape")
+        game.show("Paperclip")
+        game.give("Paperclip")
+    },
+    look: "You can't look at it, you've got a bag on your head",
+    examine: ("You feel the shape. It feels like something made of wire, " +
+    "perhaps a paper clip."),
+    speak: "You've been gagged, but you doubt the object could reply anyway."
+    |}), "Darkness")
+
+game.addItem(new Item({|
+    id: "Handcuffs", 
+    alias: "handcuffs",
+    drop: function() {
+        tell("The handcuffs are firmly attached to you; there's no way of just"
+        + " dropping them.")
+    },
+    look: ("You can't see them for the bag on your head, but they're tight and"
+        + " digging into your wrists."),
+    examine: ("You can feel the cuffs if you twist your fingers around. They're"
+        + " cold metal and very solid. There's no way of just pulling them off.")
+    |}), "Darkness")
+
+game.addItem(new Item({|
+    visible: false,
+    id: "Paperclip",
+    alias: "paperclip",
+    drop: ("It really wouldn't be a good idea to drop your only chance of"
+        + " escape!"),
+    look: "You can't see it, you're blindfolded.",
+    examine: "You can bend it into shapes.",
+    uses: {|
+        Handcuffs: function() {
+            tell("You slot the paper clip into the narrow lock on the" + " handcuffs. After some wriggling, you feel it catch. The handcuffs loosen, then swing open. You are free. You are about to tear the hood from your head when someone else does it for you. You realise you are in a helicopter! You could be anywhere! Solidly built men man-handle you out of the craft and across a small hangar.  Before you know it, you have been deposited in a dull prison cell with little hope of rescue. Still, at least you're free from your handcuffs...")
+            game.move("Cell")
+            game.take("Paperclip")
+            game.hide("Paperclip")
+            game.take("Handcuffs")
+            game.hide("Handcuffs")
+        }
+    |}
+|}), "Darkness")
+
+game.addRoom(new Room({|
+    id: "Cell",
+    alias: "cell",
+    predescription: "You are in a dank, bare, prison:",
+    description: ("This drab grey cell has no windows and no light, save for"
+    + " the glow given off from a laser forcefield and a thin sliver of light"
+    + " shining through a barred slot in the heavy iron door."),
+    exits: {|
+        north: function() {tell("You can't leave your cell that easily!")}
+        |},
+    enter: function() {
+        if (game.userHasItem("Cot2")) {
+            tell("You are forced to drop the cot before crawling through the"
+            + " air duct.")
+            game.take("Cot2")
+            game.moveItem("Cot2", "Cell2")
+        }
+    }
+|}))
+
+game.addItem(new Item({|
+    id: "Cot",
+
+    alias: "cot",
+
+    take: function() {
+        tell("You pick up the flimsy metal-framed bed. It'll be too big to take"
+        + " out of the room but you can lug it around in here all you want."
+        + " Moving the cot revealing a small grille in the wall...")
+        game.show("Grille")
+        game.give("Cot")
+    },
+    
+    drop: function() {
+        tell("You drop the cot and it clatters to the floor.")
+        game.take("Cot")
+    },
+
+    speak: "It's your only companion, but still, it doesn't speak.",
+    look: "It's a bare steel cot.",
+
+    examine: ("Your captors have neglected to even put a mattress on the damn"
+    + " thing - it'd be more comfortable sleeping on the floor. It looks quite"
+    + " heavy, but light enough to pick up."),
+
+    uses: {|
+        LaserForcefield: function() {
+            tell("You lean the relatively heavy cot on the forcefield. This"
+            + " obviously puts some strain on the forcefield as the humming"
+            + " increases significantly.")
+            game.hide("Cot")
+            game.take("Cot")
+            game.hide("LaserForcefield")
+            game.show("LaserForcefield2")
+            if (game.isItemVisible("LaserForcefield4")) {
+                tell("The combined force of both cots leaning on the laser"
+                + " forcefield causes it to short out with a small bang. That's"
+                + " state of the art for you.")
+                game.hide("LaserForcefield2")
+                game.hide("LaserForcefield4")
+                game.show("Door")
+                print "Showing door2"
+                game.show("Door2")
+            } else {
+                tell("The cot is straining the forcefield, but not enough to"
+                + " break it.")
+            }
+        }
+    |}
+    
+|}), "Cell")
+
+game.addItem(new Item({|
+    id: "Grille",
+    alias: "grille",
+    look: ("This grille is covering a ventilation shaft. It's firmly screwed to"
+        + " the wall."),
+    take: function() {tell("You tug at the grille but it's screwed in tight."
+        + " There's no way you can remove it with your bare hands.")},
+    speak: "Your voice echoes through the ventilation shaft behind the grille.",
+    examine: ("You could unscrew it if you had anything vaguely resembling a"
+        + "screwdriver."),
+    visible: false
+|}), "Cell")
+
+game.addItem(new Item({|
+    id: "Dinner",
+    prefix: "your",
+    alias: "dinner",
+    look: "It's grey and sludgy. And cold. And those are it's good points.",
+    take: ("You could take that, but it'd really mess up your pockets. If you're"
+        + " still stuck in here in a week, you *might* consider eating it."),
+    speak: ("Give it a few weeks and there might be enough life here to strike"
+        + " up a conversation with..."),
+    examine: ("You sift through the goop in the hopes of finding a key or a"
+    + " message or something, but all you find is more goop and what might be rat"
+    + " droppings.")
+|}), "Cell")
+
+game.addItem(new Item({|
+    id: "Fork",
+    alias: "fork",
+    look: ("It's a plastic fork. Presumably metal is too dangerous to give to"
+        + " prisoners."),
+    take: "You pick up the one halfway useful part of your dinner.",
+    speak: "It's a fork - it can't talk.",
+    examine: "It looks quite sturdy. The handle is narrow.",
+    uses: {|
+        Grille: function() {
+            tell("You very carefully use the fork handle to prise the screws"
+            + " loose. Soon you have removed the grille and can see into the"
+            + " next cell through a small duct.\n\nYou can now crawl WEST into"
+            + " the next cell.")
+            game.getRoom("Cell").setExit("west", "Cell2")
+            game.hide("Grille")
+        }
+    |}
+|}), "Cell")
+
+game.addItem(new Item({|
+    id: "LaserForcefield",
+    alias: "Laser Forcefield",
+    look: ("It looks like a sheet of smokey light hovering a few feet away from"
+        + " the cell door. It's completely impassable."),
+    examine: ("It's coming from a projector built into the wall. It continues"
+        + " through a thin slot into the cell next door. A warning label on the emitter"
+        + " states that overworking the forcefield may cause it to short"
+        + " circuit."),
+    prefix: "a high-tech",
+    take: function() {tell("Touching the forcefield merely increases it's"
+        + " humming noise; you can't move it.")},
+    speak: "It hums slightly but doesn't talk."
+|}), "Cell")
+
+game.addItem(new Item({|
+    id: "LaserForcefield2",
+    alias: "Laser Forcefield",
+    look: ("It looks like a sheet of smokey light hovering a few feet away from"
+        + " the cell door. It's completely impassable. There's a cot leaning on"
+        + " it."),
+    visible: false,
+    prefix: "a high-tech",
+    take: function() {tell("Touching the forcefield merely increases it's"
+        + " humming noise; you can't move it. The cot's doing a fine job, no"
+        + " point taking that.")},
+    examine: ("It's coming from a projector built into the wall. It continues"
+        + " through a thin slot into the cell next door. A warning label on the"
+        + " emitter states that overworking the forcefield may cause it to"
+        + " short circuit. You're currently overworking it by leaning a cot on"
+        + " it.")
+    |}), "Cell")
+
+game.addRoom(new Room({|
+    id: "Cell2",
+    alias: "cell",
+    description: ("This cell is much the same as your own. The paint is peeling"
+        + " slightly less, and this cell isn't occupied, but those are the only"
+        + " differences."),
+    predescription: "You are in the cell to the west of your own.",
+    enter: function() {
+        if (game.userHasItem("Cot")) {
+            tell("You are forced to drop the cot before crawling through the"
+            + " air duct.")
+            game.take("Cot")
+            game.moveItem("Cot", "Cell")
+        }
+    },
+    exits: {|
+        east: "Cell",
+        north: function() {
+            tell("You can't leave the cell that easily!")
+        }
+    |}
+|}))
+
+game.addItem(new Item({|
+    id: "Cot2",
+    alias: "cot",
+    look: "It's a bare steel cot.",
+    speak: "It doesn't speak",
+    take: function() {
+        tell("You pick up the flimsy metal-framed bed. It'll be too big to take"
+        + " out of the room but you can lug it around in here all you want.")
+        game.give("Cot2")
+    },
+    examine: ("Your captors have neglected to even put a mattress on the damn"
+        + " thing - it'd be more comfortable sleeping on the floor. It looks"
+        + " quite heavy, but light enough to pick up."),
+    uses: {|
+        LaserForcefield3: function() {
+            tell("You lean the relatively heavy cot on the forcefield. This"
+                + " obviously puts some strain on the forcefield as the humming"
+                + " increases significantly.")
+            game.hide("LaserForcefield3")
+            game.show("LaserForcefield4")
+            if (game.isItemVisible("LaserForcefield2")) {
+                tell("The combined force of both cots leaning on the laser"
+                    + " forcefield causes it to short out with a small bang."
+                    + " That's state of the art for you.")
+                game.hide("LaserForcefield3")
+                game.hide("LaserForcefield4")
+                print "showing doors"
+                game.show("Door2")
+                game.show("Door")
+            } else {
+                tell("The cot is straining the forcefield, but not enough to"
+                    + " break it.")
+            }
+        }
+    |},
+    drop: function() {
+        tell("You drop the cot and it clatters to the floor.")
+        game.take("Cot2")
+    }
+|}), "Cell2")
+
+game.addItem(new Item({|
+    id: "LaserForcefield3",
+    alias: "Laser Forcefield",
+    look: ("It looks like a sheet of smokey light hovering a few feet away from"
+        + " the cell door. It's completely impassable."),
+    examine: ("It's coming from a projector built into the wall. It continues"
+        + " through a thin slot into the cell next door. A warning label on the emitter"
+        + " states that overworking the forcefield may cause it to short"
+        + " circuit."),
+    prefix: "a high-tech",
+    take: function() {tell("Touching the forcefield merely increases it's"
+        + " humming noise; you can't move it.")},
+    speak: "It hums slightly but doesn't talk."
+|}), "Cell2")
+
+game.addItem(new Item({|
+    id: "LaserForcefield4",
+    alias: "Laser Forcefield",
+    look: ("It looks like a sheet of smokey light hovering a few feet away from"
+        + " the cell door. It's completely impassable. There's a cot leaning on"
+        + " it."),
+    visible: false,
+    prefix: "a high-tech",
+    take: function() {tell("Touching the forcefield merely increases it's"
+        + " humming noise; you can't move it. The cot's doing a fine job, no"
+        + " point taking that.")},
+    examine: ("It's coming from a projector built into the wall. It continues"
+        + " through a thin slot into the cell next door. A warning label on the"
+        + " emitter states that overworking the forcefield may cause it to"
+        + " short circuit. You're currently overworking it by leaning a cot on"
+        + " it.")
+    |}), "Cell2")
+
+game.addItem(new Item({|
+    id: "Door",
+    alias: "door",
+    look: ("It's a heavy metal door with a barred slot in it. The slot is sealed"
+        + " with plexiglass."),
+    take: function() {tell("You attempt to pull the door off it's hinges but"
+        + " your feeble human physiology means you fail miserably.")},
+    speak: "It responds with steely silence.",
+    examine: ("No, you can't lift it off the hinges. It's slightly more secure"
+        + " than that."),
+    visible: false
+    |}), "Cell")
+
+game.addItem(new Item({|
+    id: "Door2",
+    alias: "door",
+    look: ("It's a heavy metal door with a barred slot in it. The slot is sealed"
+        + " with plexiglass. You can make out an armed guard beyond the door."),
+    take: function() {tell("You attempt to pull the door off it's hinges but"
+        + " your feeble human physiology means you fail miserably.")},
+    speak: function() {
+            tell("You shout to the guard but he doesn't respond. After some"
+                + " more shouting, he turns to you and cocks his gun. You start"
+                + " to wonder if continuing to shout might not be such a good"
+                + " idea. Just as you shut up however, a different sound starts"
+                + " up - a loud alarm starts blaring. The guard looks around"
+                + " worried. He gets on the radio and asks what the hell's"
+                + "going on. Before he can get a reply, you can see the faint"
+                + " haze of gas shimmering into the room. The guard's look of"
+                + " angry bewilderment dissolves into pain and terror and he"
+                + " clutches ineffectually at his throat. After barely three"
+                + " seconds, he keels over; his eyes roll back in his skull.\n")
+            tell("You stare at the guard's corpse, and panic momentarily that"
+                + " you're next. But no gas comes. The cells must be on a"
+                + " different air purificaton system. Given the security issue,"
+                + " it probably wouldn't be in the building's schematics to"
+                + " have air vents leading from prison cells out into the"
+                + "corridor. Presently, a white cloud of gas sprays from the"
+                + " ceiling, presumably to cleanse the corridor. After the gas"
+                + " has cleared, something you really werent expecting happens"
+                + " - with a buzz, the cell door swings open.")
+            game.hide("Door")
+            game.hide("Door2")
+            game.getRoom("Cell2").setExit("north", "PrisonCorridor")
+        },
+    examine: ("No, you can't lift it off the hinges. It's slightly more secure"
+        + " than that."),
+    visible: false
+    |}), "Cell2")
+
+
+tell("After your uncle's untimely death, you explored his empty mansion to find"
++ " the truth about his demise. You learned that your uncle's scientific skills"
++ " were being abused by a sinister corporation developing an untraceable toxin"
++ " for assassinations, and that when your uncle tried to destroy his work, he"
++ " was silenced. You were confronted by the corporation's agents, but fought"
++ " back, killing one. Unfortunately you were struck by a tazer before you" 
++ " could escape from the mansion. Unconsciousness took you and you remember"
++ " nothing until now. You have awoken in darkness, a bag on your head and"
++ " handcuffs on your wrists...")
+
+game.move("Darkness")
+game.give("Handcuffs")
+
+print "> take shape"
+game.cmdTakeItem("Shape")
+print "> drop handcuffs"
+game.cmdDropItem("Handcuffs")
+print "> use paperclip on handcuffs"
+game.cmdUseItem("Paperclip", "Handcuffs")
+print "> look cot"
+game.cmdLookItem("Cot")
+print "> look grille"
+game.cmdLookItem("Grille")
+print "> take grille"
+game.cmdTakeItem("Grille")
+print "> examine cot"
+game.cmdExamineItem("Cot")
+print "> take cot"
+game.cmdTakeItem("Cot")
+print "> look grille"
+game.cmdLookItem("Grille")
+print "> use fork on grille"
+game.cmdUseItem("Fork", "Grille")
+print "> take grille"
+game.cmdTakeItem("Grille")
+print "> take fork"
+game.cmdTakeItem("Fork")
+print "> use fork on grille"
+game.cmdUseItem("Fork", "Grille")
+print "> go west"
+game.cmdGoDir("west")
+print "> use cot on forcefield"
+game.cmdUseItem("Cot", "LaserForcefield")
+print "> take cot"
+game.cmdTakeItem("Cot2")
+print "> look forcefield4"
+game.cmdLookItem("LaserForcefield4")
+print "> use cot on forcefield"
+game.cmdUseItem("Cot2", "LaserForcefield3")
+print "> look forcefield"
+game.cmdLookItem("LaserForcefield4")
+print "> go north"
+game.cmdGoDir("north")
+print "> go east"
+game.cmdGoDir("east")
+print "> take cot"
+game.cmdTakeItem("Cot")
+print "> use cot on forcefield"
+game.cmdUseItem("Cot", "LaserForcefield")
+print "> look forcefield"
+game.cmdLookItem("LaserForcefield2")
+print "> talk door"
+game.cmdSpeakItem("Door")
+print "> take door"
+game.cmdTakeItem("Door")
+print "> go west"
+game.cmdGoDir("west")
+print "> speak door"
+game.cmdSpeakItem("Door2")
