@@ -1,0 +1,29 @@
+x = 3
+print "semicolons are optional"
+print (
+
+
+    4
++
+5)
+
+print "multi-line expressions work"
+
+var y = {|
+    a: 3,
+    b : 4
+    |}
+
+print "multi-line objects work!"
+
+var z = [
+3,4,5,
+7,8]
+
+print "multi-line lists work!"
+
+/**
+ * This is some documentation yo!
+ */
+
+print "comments work!"

@@ -1,0 +1,360 @@
+var Game = function(start_room) {
+    // Map from room names to all rooms, visible or not.
+    var rooms = {||}
+    // Map from item names to all items, visible or not
+    var items = {||}
+    // Set of held items
+    var held_items = {||}
+    // Locations of non-held items
+    var item_locations = {||}
+
+    var current_room = start_room;
+
+    this.addRoom = function(room) {
+        rooms[room.getId()] = room
+    }
+
+    this.addItem = function(item, room_name) {
+        var item_name = item.getId()
+        if (item_name in items) {
+            error("Item " + item_name + " already exists.")   
+        }
+        items[item_name] = item
+        item_locations[item_name] = room_name
+    }
+
+    this.getRoomIdByAlias = function(alias) {
+        var real_rooms = rooms.ownItems().map(function(e) {
+            return rooms[e]
+        })
+        var i = 0
+        while (i < real_rooms.length()) {
+            if (real_rooms[i].getAlias() == alias) {
+                return real_rooms[i].getId()
+            }
+            i += 1
+        }
+        error("No room with that alias.")
+    }
+
+    this.getRoom = function(room_name) {
+        return rooms[room_name]
+    }
+
+    this.getItem = function(item_name) {
+        return items[item_name]
+    }
+
+    this.userHasItem = function(item_name) {
+        return item_name in held_items
+    }
+
+    this.isItemVisible = function(item_name) {
+        return items[item_name].isVisible()
+    }
+
+    this.give = function(item_name) {
+        if (item_name in held_items) {
+            return false
+        } else {
+            held_items[item_name] = true
+            del item_locations[item_name]
+        }
+    }
+
+    this.take = function(item_name) {
+        if (!(item_name in held_items)) {
+            return false
+        }
+        del held_items[item_name]
+        item_locations[item_name] = current_room
+        return true
+    }
+
+    this.show = function(item_name) {
+        if (!(item_name in items)) {
+            error("Attempted to show non-existent item")
+        }
+        items[item_name].show()
+    }
+
+    this.hide = function(item_name) {
+        if (!(item_name in items)) {
+            error("Attempted to hide non-existent item")
+        }
+        items[item_name].hide()
+    }
+
+    this.moveItem = function(item_name, room_name) {
+        del held_items[item_name]
+        item_locations[item_name] = room_name
+    }
+
+    this.move = function(room_name) {
+        current_room = room_name
+        rooms[current_room].onEnter()
+    }
+
+    this.cmdGoDir = function(dir) {
+        rooms[current_room].onTryDir(dir)
+    }
+
+    this.cmdDropItem = function(item_name) {
+        if (!(item_name in held_items && items[item_name].isVisible())) {
+            tell("You don't have that item!")
+            return;
+        } else {
+            items[item_name].onDrop()
+        }
+    }
+
+    this.cmdLookItem = function(item_name) {
+        if (!(item_name in item_locations) && !(item_name in held_items)) {
+            tell("There is no such item.")
+        } else if (items[item_name].isHidden()) {
+            tell("There is no such item.")
+        } else if (item_locations[item_name] != current_room) {
+            tell("There is no such item.")
+        } else {
+            items[item_name].onLook()
+        }
+    }
+
+    this.cmdExamineItem = function(item_name) {
+        if (((!(item_name in item_locations)) || (item_locations[item_name] !=
+            current_room)) && !(item_name in held_items)) {
+            tell("There is no such item")
+        } else {
+            items[item_name].onExamine()
+        }
+    }
+
+    this.cmdTakeItem = function(item_name) {
+        if (item_name in held_items && items[item_name].isVisible()) {
+            tell("You already have that item!")
+        } else if (!(item_name in item_locations) || item_locations[item_name]
+        != current_room || items[item_name].isHidden()) {
+            tell("There is no such item")
+        } else {
+            items[item_name].onTake()
+        }
+    }
+
+    this.cmdUseItem = function(item_name1, item_name2) {
+        if (!(item_name1 in held_items && items[item_name1].isVisible())) {
+            tell("You don't have that item.")
+        } else if (!(item_name2 in items)) {
+            tell("That object doesn't exist.")
+        } else {
+            items[item_name1].onUse(item_name2)
+        }
+    }
+    this.cmdSpeakItem = function(item_name) {
+        if (((!(item_name in item_locations)) || (item_locations[item_name] !=
+            current_room)) && !(item_name in held_items)) {
+            print item_name in item_locations
+            print item_locations[item_name]
+            print current_room
+            print item_name in held_items
+            tell("There is no such item")
+        } else {
+            items[item_name].onSpeak()
+        }
+    }
+
+    this.userItems = function() {
+        return user_items.clone()
+    }
+
+    this.currentRoom = function() {
+        return current_room
+    }
+    
+}
+
+const var game = new Game();
+
+var Room = function(options) {
+    var required_fields = ['id', 'alias', 'predescription', 'description']
+    // Check that all required fields are included in options
+    if (!required_fields.all(function(e) {e in options})) { 
+        error("Error: Room constructor called without all required arguments.")
+    } 
+
+    if (!('exits' in options)) {
+        options.exits = {||}
+    }
+
+    this.getId = function() {
+        return options.id
+    }
+
+    this.getAlias = function() {
+        return options.alias
+    }
+
+    this.setExit = function(dir, action) {
+        options.exits[dir] = action
+    }
+
+    this.delExit = function(dir) {
+        del options.exits[dir]
+    }
+
+    this.onInit = function() {
+        if (isinstance(options.init, Function)) {
+            var init = options.init()
+            init()
+        } else {
+            error("Invalid init attribute type for Room")
+        }
+    }
+
+    this.items = function() {
+
+    }
+
+    this.onEnter = function() {
+        if (options.predescription[-1] == ":") {
+            tell(options.predescription[:-1] + " " + options.alias)
+        } else {
+            tell(options.predescription)
+        }
+        tell(options.description)
+        if (isinstance(options.enter, Function)) {
+            // pattern to avoid 'this' binding to options
+            var enter = options.enter
+            enter()
+        } else if (isinstance(options.enter, String)) {
+            tell(options.enter)
+        } else if (options.enter == undefined) {
+        } else {
+            error("Invalid type of enter attribute for Room")
+        }
+    };
+
+    this.onTryDir = function(dir) {
+        var exits = options.exits
+        var action = exits[dir]
+        if (isinstance(action, String)) {
+            game.move(action)
+            this.onExit()
+        } else if (isinstance(action, Function)) {
+            action()
+        } else if (action == undefined) {
+            tell("You can't go that way!")
+        }
+    }
+
+    this.onExit = function() {
+        if (isinstance(options.exit, Function)) {
+            var exit = options.exit
+            exit()
+        } else if (isinstance(options.exit, String)) {
+            tell(options.exit)
+        } else if (options.exit == undefined) {
+        } else {
+            error("Invalid type of exit attribute for Room")
+        }
+    };
+}
+
+var Item = function(options) {
+    var required_fields = ['id', 'alias', 'look', 'examine']
+    var this_item = this
+    if (!required_fields.all(function(e) {e in options})) {
+        error("Error: Item constructor called without all required arguments.")
+    }
+    if (! ('article' in options)) {
+        options.article = 'it'
+    }
+    if (! ('visible' in options)) {
+        options.visible = true
+    }
+    if (! ('prefix' in options)) {
+        options.prefix = 'a'
+    }
+    if (! ('uses' in options)) {
+        options.uses = {||}
+    } 
+    if (!('gender_object' in options)) {
+        options.gender_object = 'it'
+    }
+
+    if (!('gender_subject' in options)) {
+        options.gender_subject = 'it'
+    }
+
+    this.getId = function() {
+        return options.id
+    }
+
+    this.isVisible = function() {
+        return options.visible
+    }
+
+    this.isHidden = function() {
+        return !options.visible
+    }
+
+    this.show = function() {
+        options.visible = true
+    }
+
+    this.hide = function() {
+        options.visible = false
+    }
+
+    var makeHandler = function(attr_name, default_action, string_action) {
+        return function() {
+            var action = options[attr_name]
+            if (isinstance(action, String)) {
+                tell(action)
+                if (string_action) {
+                    string_action()
+                }
+            } else if (isinstance(action, Function)) {
+                action()
+            } else if (action == undefined) {
+                default_action()
+            } else {
+                error("Invalid " + attr_name + " attribute type for Item")
+            }
+        }
+    }
+
+    this.onLook = makeHandler('look', function() {
+        tell("There's nothing to see there")
+    });
+
+    this.onExamine = makeHandler('examine', function() {
+        tell("There's nothing of interest.")
+    });
+
+    this.onSpeak = makeHandler('speak', function() {
+        tell(options.pronoun.capitalize() + " doesn't respond.")
+    });
+
+    this.onTake = makeHandler('take', function() {
+        game.give(this_item)
+        tell("You take " + options.article + options.alias)
+    }, function() {game.give(this_item.getId())});
+
+    this.onDrop = makeHandler('drop', function() {
+        game.take(options.id)
+        tell("You drop " + options.article + options.alias)
+    })
+
+
+    this.onUse = function(other_item_name) {
+        var action = options.uses[other_item_name]
+        if (isinstance(action, String)) {
+            tell(action)
+        } else if (isinstance(action, Function)) {
+            action()
+        } else if (action == undefined) {
+            tell("You can't do anything with that on its own.")
+        }
+    }
+}
+
