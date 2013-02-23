@@ -8,26 +8,25 @@ from undefineds import Undefined
 
 from expressions_base import *
 
-class PyStatement(Expr):
-    def __init__(self, contextFunc):
-        self.func = contextFunc
+class PyExpr(Expr):
+    def __init__(self, func):
+        self.func = func
 
     def Eval(self, context):
         return self.func(context)
 
-class BinaryPyStatement(Expr):
-    def __init__(self, f):
-        self.f = f
+class BinaryPyExpr(Expr):
+    def __init__(self, func):
+        self.func = func
 
     def Eval(self, context):
         this = context.GetVar('this')
         other = context.GetVar('other')
-        return self.f(this, other)
+        return self.func(this, other)
 
 class BinaryFunction(Function):
-
     def __init__(self, f):
-        Function.__init__(self, None, ['other'], BinaryPyStatement(f))
+        Function.__init__(self, None, ['other'], BinaryPyExpr(f))
 
 def get_object_attributes(context):
     this = context.GetVar('this')
@@ -72,8 +71,8 @@ def string_to_lower(context):
 object_proto = RawObject()
 function_proto = Object()
 list_proto = Object()
-list_proto.SetAttr('toUpper', Function(None, [], PyStatement(string_to_upper)))
-list_proto.SetAttr('toLower', Function(None, [], PyStatement(string_to_lower)))
+list_proto.SetAttr('toUpper', Function(None, [], PyExpr(string_to_upper)))
+list_proto.SetAttr('toLower', Function(None, [], PyExpr(string_to_lower)))
 num_proto = Object()
 undefined_proto = Object()
 bool_proto = Object()
@@ -113,13 +112,13 @@ object_proto.SetAttr('__pow__', BinaryFunction(pow_objects))
 object_proto.SetAttr('__mod__', BinaryFunction(mod_objects))
 
 object_proto.SetAttr('toString', Function(None, [],
-    PyStatement(objects_to_string)))
+    PyExpr(objects_to_string)))
 
 object_proto.SetAttr('items', Function(None, [],
-    PyStatement(get_object_attributes)))
+    PyExpr(get_object_attributes)))
 
 object_proto.SetAttr('clone', Function(None, [],
-    PyStatement(clone_object)))
+    PyExpr(clone_object)))
 def list_length(context):
     this = context.GetVar('this')
     assert isinstance(this, List)
@@ -137,9 +136,9 @@ def list_pop(context):
     assert isinstance(this, List)
     return this.elements.pop()
 
-list_proto.SetAttr('length', Function(None, [], PyStatement(list_length)))
-list_proto.SetAttr('push', Function(None, ['elem'], PyStatement(list_push)))
-list_proto.SetAttr('pop', Function(None, [], PyStatement(list_pop)))
+list_proto.SetAttr('length', Function(None, [], PyExpr(list_length)))
+list_proto.SetAttr('push', Function(None, ['elem'], PyExpr(list_push)))
+list_proto.SetAttr('pop', Function(None, [], PyExpr(list_pop)))
 
 def function_map(context):
     this = context.GetVar('this')
@@ -156,8 +155,8 @@ def function_filter(context):
     return List(filtered)
 
 function_proto.SetAttr('map', Function(None, ['list'],
-    PyStatement(function_map)))
+    PyExpr(function_map)))
 function_proto.SetAttr('filter', Function(None, ['list'],
-    PyStatement(function_filter)))
+    PyExpr(function_filter)))
 
 
