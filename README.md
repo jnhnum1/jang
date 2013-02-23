@@ -24,7 +24,8 @@ client connection.  The same Jang state might be loaded for many
 different connections, but `writeToClient` would always refer to the current
 connection.
    
-#### 2. Call Jang functions from Python This constitutes the other half of the Python/Jang foreign function
+#### 2. Call Jang functions from Python
+This constitutes the other half of the Python/Jang foreign function
 interface.  Together, these two capabilities make Jang usable in an existing
 web server running Python.  For example, one might have the following Jang
 function:
