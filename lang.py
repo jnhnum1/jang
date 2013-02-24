@@ -170,13 +170,13 @@ def t_ID(t):
     return t
 
 def t_INT(t):
-    r'[-]?(([1-9][0-9]*)|0)'
+    r'(([1-9][0-9]*)|0)'
     t.value = int(t.value)
     return t
 
 def t_FLOAT(t):
     # +/- float with or without scientific notation
-    r'[+-]?((([0-9]*)\.[0-9]+)|([0-9]+\.))([eE][1-9][0-9]*)?|[1-9][0-9]*[eE][1-9][0-9]*'
+    r'((([0-9]*)\.[0-9]+)|([0-9]+\.))([eE][1-9][0-9]*)?|[1-9][0-9]*[eE][1-9][0-9]*'
     t.value = float(t.value)
     return t
 
@@ -213,6 +213,7 @@ precedence = (
         ('left', 'MOD'),
         ('left', 'TIMES', 'DIVIDE'),
         ('right', 'EXPT'),
+        ('right', 'UMINUS'),
         ('left', 'LSQUARE', 'RSQUARE'), # for ranges
         ('left', 'DOT'),
         ('nonassoc', 'NEW'),
@@ -453,6 +454,10 @@ for token, expr_class in binary_expressions:
     make_binary_expression(token, expr_class)
 for token, op_class in op_equals_expressions:
     make_op_equals_expression(token, op_class)
+
+def p_expr_uminus(p):
+  '''expression : MINUS expression %prec UMINUS'''
+  p[0] = SubtractExpr(Number(0), p[2])
 
 # Boolean expressions
 

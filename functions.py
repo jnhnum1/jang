@@ -30,6 +30,7 @@ class Function(Object):
         Object.SetAttr(self, attr_name, attr_value)
 
     def Call(self, arguments, keyword_arguments=None, parent=None, is_new=False):
+        # TODO actually handle these keyword arguments
         call_context = Context(self.parent_context)
         for param, value in zip(self.param_list, arguments):
             call_context.SetVar(param, value, local=True)
