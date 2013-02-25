@@ -122,31 +122,40 @@ Special functions may be added here which are not picklable.  See context.py for
 details.
 
 ### Tail-call Optimization
-Python is not a tail-call optimized language.  Therefore, to bring tail-call
-optimization to Jang, we need to evaluate Jang expressions non-recursively.
-
-This section addresses the question of how we can implement tail-call
-optimization when our host language does not itself have tail-call optimization.
-
 Tail-call optimization gives the ability to (in certain well-defined and easily
 recognizable circumstances) make recursive calls to functions without consuming
-any additional space.
+any additional space, either on the stack or on the heap.
 
-The natural way to evaluate a syntax tree is recursively.  This uses the host
-language's stack to store both a stack of expressions as well as their internal
-evaluation state.  To perform tail-call optimization, we must move to managing
-our own stack.
+The most natural way to evaluate a syntax tree is recursively.  This uses the
+host language's stack to store both a stack of expressions and their respective
+internal evaluation states.  If the host language is tail-call optimized, it is
+typically easy to transfer this optimization to the interpreted language.  
 
-The thing we are pushing on the stack will be partially executed functions or
-expressions which require sub-expressions to be evaluated before they themselves
-can resume execution.
+Unfortunately, Python is not a tail-call optimized language.  Therefore, to
+bring tail-call optimization to Jang, we need to evaluate Jang expressions
+non-recursively. This section addresses the question of how we can (nicely)
+implement tail-call optimization for Jang.
 
-So, a function has a list of statements, most of which will only update the
-state.  return statements should be treated specially.  The state consists of
-which statement to be executed next.
+Not all calls are tail calls, so we will still need to maintain a stack.  The things we push onto the stack will be partially executed functions or partially evaluated expressions.  They will require the result of a function or expression further down on the stack before their execution/evaluation can be resumed.
 
-The Evaluator maintains a stack of currently evaluating expressions.  it would
-be nice if these could be implemented as coroutines, so you have something like:
+As a simple example of what kind of state needs to be stored, consider the
+expression `foo() + bar()`.  You start with an addition expression on the stack,
+with neither of its arguments evaluated so far.  Now the function call `foo()`
+is pushed onto the stack, and it gives some result.  Our evaluator passes this
+result to the addition expression, which stores it, and the expression then
+requests `bar()` to be evaluated.  So `bar()` is pushed onto the stack, its
+result is passed to the addition expression, and then the addition expression's
+result is passed to whatever was higher up on the stack.
+
+Now, if a function or expression requests a tail-call, our evaluator can simply
+replace that function/expression on the stack with the requested expression.
+This is how tail-call optimization works in Jang.
+
+The core of this scheme is the representation of in-progress, currently
+evaluating/executing expressions.  Python has coroutines, which are a nice way
+of writing functions which need to wait for extra input and produce multiple
+outputs, and it would nice to implement our partial expressions this way.  It
+would look something like this:
 
 ```python
 def addExpr(expr1, expr2):
@@ -155,9 +164,9 @@ def addExpr(expr1, expr2):
   yield("result", val+val2)
 ```
 
-Coroutines are not serializable, which is bad if we ever want to add a
-coroutine-like `getUserInput()` function to Jang, or if we want Jang-internal
-coroutines.
+However, coroutines are not serializable, which means they are not a viable
+choice if we ever want to add a coroutine-like `getUserInput()` function to
+Jang, or if we want Jang-internal coroutines.
 
 A coroutine is implicitly storing the position of its execution so far (i.e.
 which arguments, if any, have already been evaluated), so to make a serializable
@@ -189,7 +198,7 @@ class AddExpr:
 ```
       
  
-The evaluator needs to (while using O(1) stack space) run expression's Eval()
+The evaluator needs to (using O(1) Python stack space) run expressions' `Eval()`
 methods.  Their return values "request" the evaluator to perform certain
 actions.  For normal stackful recursion, they can request that the evaluator
 evaluate another expression.  The key is that they can also request that the
@@ -197,7 +206,9 @@ evaluator perform a tail-call on an expression.  If expression X returns
 ("tailcall", Y), it means that the final value of X is whatever the final value
 of Y is.  
 
-One thing we need to consider is that return statements are special in that they can cause multiple expressions to be popped from the stack, as in if we have the following:
+One thing we need to consider is that return statements are special in that they
+can cause multiple expressions to be popped from the stack, as in if we have the
+following:
 
 ```javascript
 var getParity = function(x) {
