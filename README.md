@@ -125,17 +125,28 @@ details.
 Python is not a tail-call optimized language.  Therefore, to bring tail-call
 optimization to Jang, we need to evaluate Jang expressions non-recursively.
 
-This section addresses the question of how we can implement tail-call optimization when our host language does not itself have tail-call optimization.
+This section addresses the question of how we can implement tail-call
+optimization when our host language does not itself have tail-call optimization.
 
-Tail-call optimization gives the ability to (in certain well-defined and easily recognizable circumstances) make recursive calls to functions without consuming any additional space.
+Tail-call optimization gives the ability to (in certain well-defined and easily
+recognizable circumstances) make recursive calls to functions without consuming
+any additional space.
 
-The natural way to evaluate a syntax tree is recursively.  This uses the host language's stack to store both a stack of expressions as well as their internal evaluation state.  To perform tail-call optimization, we must move to managing our own stack.
+The natural way to evaluate a syntax tree is recursively.  This uses the host
+language's stack to store both a stack of expressions as well as their internal
+evaluation state.  To perform tail-call optimization, we must move to managing
+our own stack.
 
-The thing we are pushing on the stack will be partially executed functions or expressions which require sub-expressions to be evaluated before they themselves can resume execution.
+The thing we are pushing on the stack will be partially executed functions or
+expressions which require sub-expressions to be evaluated before they themselves
+can resume execution.
 
-So, a function has a list of statements, most of which will only update the state.  return statements should be treated specially.  The state consists of which statement to be executed next.
+So, a function has a list of statements, most of which will only update the
+state.  return statements should be treated specially.  The state consists of
+which statement to be executed next.
 
-The Evaluator maintains a stack of currently evaluating expressions.  it would be nice if these  could be implemented as coroutines, so you have something like
+The Evaluator maintains a stack of currently evaluating expressions.  it would
+be nice if these could be implemented as coroutines, so you have something like:
 
 ```python
 def addExpr(expr1, expr2):
@@ -144,10 +155,19 @@ def addExpr(expr1, expr2):
   yield("result", val+val2)
 ```
 
-Coroutines are not serializable, which is bad if we ever want to add a coroutine-like `getUserInput()` function to Jang, or if we want Jang-internal coroutines.
+Coroutines are not serializable, which is bad if we ever want to add a
+coroutine-like `getUserInput()` function to Jang, or if we want Jang-internal
+coroutines.
 
-Instead, we need to explicitly keep track of the state, so that AddExpr.eval() can be called 
-We have something like 
+A coroutine is implicitly storing the position of its execution so far (i.e.
+which arguments, if any, have already been evaluated), so to make a serializable
+version of a coroutine we need to make that state explicit.  We thus make
+`AddExpr` into a class, and arrange that `AddExpr.eval()` will be called
+multiple times, returning a message to the evaluator each time.  The example
+below shows the "eval" message, which asks the evaluator to evaluate an
+expression and pass the result to `Eval()` on the next call.  You can also see
+the "result" message, which is what `Eval()` returns when it is has a final
+result.
 
 ```python
 class AddExpr:
@@ -169,7 +189,13 @@ class AddExpr:
 ```
       
  
-The evaluator needs to (while using O(1) stack space) run expression's Eval() methods.  Their return values "request" the evaluator to perform certain actions.  For normal stackful recursion, they can request that the evaluator evaluate another expression.  The key is that they can also request that the evaluator perform a tail-call on an expression.  If expression X returns ("tailcall", Y), it means that the final value of X is whatever the final value of Y is.  
+The evaluator needs to (while using O(1) stack space) run expression's Eval()
+methods.  Their return values "request" the evaluator to perform certain
+actions.  For normal stackful recursion, they can request that the evaluator
+evaluate another expression.  The key is that they can also request that the
+evaluator perform a tail-call on an expression.  If expression X returns
+("tailcall", Y), it means that the final value of X is whatever the final value
+of Y is.  
 
 One thing we need to consider is that return statements are special in that they can cause multiple expressions to be popped from the stack, as in if we have the following:
 
@@ -184,4 +210,9 @@ var getParity = function(x) {
 }
 ```
 
-If x is even, then the first `if` statement is pushed onto the stack.  It is not a tail-call because it is not the last statement of the function.  Then `return "even"` pops both the if statement AND the function call from the stack.  For return to work properly, it must know where the top of its stack frame is.  The top of its stack frame is the index of the last function call.  Fortunately, any tail calls that happen after the function is called do not affect this index.  
+If x is even, then the first `if` statement is pushed onto the stack.  It is not
+a tail-call because it is not the last statement of the function.  Then `return
+"even"` pops both the if statement AND the function call from the stack.  For
+return to work properly, it must know where the top of its stack frame is.  The
+top of its stack frame is the index of the last function call.  Fortunately, any
+tail calls that happen after the function is called do not affect this index.  
