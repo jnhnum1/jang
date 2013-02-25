@@ -3,15 +3,23 @@ from undefineds import Undefined
 
 class IfElseStatement(Expr):
     def __init__(self, conditionals):
-        self.conditionals = conditionals
+      self.conditionals = conditionals
+      self.state = 0
 
-    def Eval(self, context):
-        evaled = Undefined()
-        for hypothesis, statement in self.conditionals:
-            if hypothesis.Eval(context).IsTruthy():
-                evaled = statement.Eval(context)
-                break
-        return evaled
+    def Reset(self):
+# TODO only reset the things which we have evaled
+      self.state = 0
+      for hypothesis, statement in self.conditionals:
+        hypothesis.Reset()
+        statement.Reset()
+
+    def Eval(self, context, sub_value):
+      if sub_value and sub_value.IsTruthy():
+        return ("tailcall", context, self.conditionals[self.state - 1][1])
+      elif self.state < len(self.conditionals):
+        self.state += 1
+        return ("eval", context, self.conditionals[self.state - 1][0])
+      return ("result", None, Undefined())
 
 class WhileStatement(Expr):
 

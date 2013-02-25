@@ -78,23 +78,9 @@ class Object(RawObject):
 class ObjectExpression(Expr):
     def __init__(self, expressions):
         self.expressions = expressions
-        self.expr_keys = expressions.keys()
-        self.state = 0
-        self.evaled_items = {}
 
-    def Reset(self):
-      self.evaled_items = {}
-      self.state = 0
-
-    def Eval(self, context, sub_value):
-      self.state += 1
-      if self.expr_keys and self.state <= len(self.expr_keys):
-        key = self.expr_keys[self.state - 1]
-        if self.state > 1:
-          oldkey = self.expr_keys[self.state - 2]
-          self.evaled_items[oldkey] = sub_value
-        return ("eval", context, self.expressions[key])
-      if self.expr_keys and self.state > len(self.expr_keys):
-        oldkey = self.expr_keys[self.state - 2]
-        self.evaled_items[oldkey] = sub_value
-      return ("result", None, Object(self.evaled_items))
+    def Eval(self, context):
+        bindings = {}
+        for key, value in self.expressions.items():
+            bindings[key] = value.Eval(context)
+        return Object(bindings)

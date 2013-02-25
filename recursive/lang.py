@@ -10,7 +10,6 @@ from lists import ListExpr
 from objects import ObjectExpression
 from ranges import RangeReference
 from tuples import TupleExpression
-import interpreter
 
 # define a bunch of parsing rules for ply to use
 
@@ -334,7 +333,7 @@ def p_expression_expression1(p):
 
 def p_expression0_reference0(p):
     '''expression0 : reference0'''
-    p[0] = RefAccess(p[1])
+    p[0] = VarAccess(p[1])
 
 def p_expression1_reference1(p):
     '''expression1 : reference1'''
@@ -377,7 +376,7 @@ def p_tuple_contents_tuple_contents2(p):
 
 def p_expression1_new_invocation(p):
     "expression0 : NEW ID LPAREN expression_list RPAREN"
-    p[0] = FunctionCall(RefAccess(VarReference(p[2])), p[4], is_new=True)
+    p[0] = FunctionCall(VarAccess(VarReference(p[2])), p[4], is_new=True)
 
 def p_expression_func_def(p):
     "expression0 : FUNCTION LPAREN paramlist RPAREN block_statement"
@@ -481,7 +480,7 @@ def p_expression_string(p):
 
 def p_else_if_chain_else_end(p):
     "else_if_chain : ELSE block_statement"
-    p[0] = [(Boolean(True), p[2])]
+    p[0] = [(Number(1), p[2])]
 
 def p_else_if_chain_else_if_end(p):
     "else_if_chain : ELSE IF LPAREN expression RPAREN block_statement"
@@ -619,7 +618,7 @@ if __name__ == '__main__':
             try:
                 statements = yacc.parse(s)
                 for statement in statements:
-                    evaluated = interpreter.evaluate(statement, context)
+                    evaluated = statement.Eval(context)
                     # print pickle.dumps(context)
                 if evaluated is not None:
                     print evaluated

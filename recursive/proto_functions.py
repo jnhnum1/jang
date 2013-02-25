@@ -12,17 +12,17 @@ class PyExpr(Expr):
     def __init__(self, func):
         self.func = func
 
-    def Eval(self, context, sub_value):
-        return ("result", None, self.func(context))
+    def Eval(self, context):
+        return self.func(context)
 
 class BinaryPyExpr(Expr):
     def __init__(self, func):
         self.func = func
 
-    def Eval(self, context, sub_value):
+    def Eval(self, context):
         this = context.GetVar('this')
         other = context.GetVar('other')
-        return ("result", None, self.func(this, other))
+        return self.func(this, other)
 
 class BinaryFunction(Function):
     def __init__(self, f):
