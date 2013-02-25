@@ -4,12 +4,11 @@ Jang
 What is Jang? 
 ----
 
-Jang is a programming language implemented in Python.  It was designed with
-several key features in mind.  One of the first features is that everything in
-Jang is serializable.  This makes Jang ideal for coding interactions between a
-server and a client in a coroutine-like fashion.  Although Jang code cannot
-currently serialize Jang objects, this would be a trivial feature to add.
-However, the following is possible now:
+Jang is a dynamically typed programming language with first-class functions and
+prototypal inheritance.  Jang has several special features which motivated its
+creation.  One of the first features is that everything in Jang is serializable.
+This makes Jang ideal for coding interactions between a server and a client in a
+coroutine-like fashion.  The following is a toy example use-case:
 
 ### Sample Use-Case
 
