@@ -28,3 +28,10 @@ print "multi-line lists work!"
  */
 
 print "comments work!"
+
+print "Does [3,4,5] contain 3?"
+print [3,4,5].contains(3)
+
+print "\nx = [1,2]. Is x < [3,4]?"
+x = [1,2]
+print x < [3,4]

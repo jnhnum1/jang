@@ -11,7 +11,10 @@ def evaluate(expr, context):
   sub_value = None
   while exprStack:
     (expr, context) = exprStack[-1]
+    # print "Expr is ", expr
     (action, context, sub_value) = expr.Eval(context, sub_value)
+    if isinstance(sub_value, FunctionCall):
+      stackFrameTops.append(len(exprStack))
     if action == "result":
       exprStack.pop()
       # check if we are leaving the current stack frame
@@ -19,14 +22,12 @@ def evaluate(expr, context):
         stackFrameTops.pop()
     elif action == "eval":
       exprStack.append((sub_value, context))
-      if isinstance(sub_value, FunctionCall):
-        stackFrameTops.append(len(exprStack))
       sub_value = None # new sub-expressions don't need subvalues
     elif action == "tailcall":
        exprStack[-1] = (sub_value, context)
        sub_value = None # tailcall doesn't need to be passed any initial sub_value
     elif action == "return":
       del exprStack[stackFrameTops[-1]:]
-      exprStack.append((context, sub_value))
+      exprStack.append((sub_value, context))
       stackFrameTops.pop() 
   return sub_value

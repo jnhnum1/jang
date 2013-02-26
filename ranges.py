@@ -37,42 +37,86 @@ class Subscriptable(Object):
 
 class RangeReference(object):
     def __init__(self,
-            base_expression, 
-            startindex_expression,
-            endindex_expression):
+      base_expression, 
+      startindex_expression,
+      endindex_expression):
 
-        self.base_expression = base_expression
-        self.startindex_expression = startindex_expression
-        self.endindex_expression = endindex_expression
-        self.startindex = None
-        self.endindex = None
+      self.base_expression = base_expression
+      self.startindex_expression = startindex_expression
+      self.endindex_expression = endindex_expression
+      self.state = 0
+      self.startindex = None
+      self.endindex = None
 
-    def Evaluate(self, context):
-        self.evaluated_base = self.base_expression.Eval(context)
-        if (not isinstance(self.evaluated_base, Subscriptable)):
-            raise TypeError("Attempted slice of non-subscriptable type")
+    def Reset(self):
+      self.state = 0
+      self.base_expression.Reset()
+      if self.startindex_expression:
+        self.startindex_expression.Reset()
+      if self.endindex_expression:
+        self.endindex_expression.Reset()
+
+    def Eval(self, context, sub_value):
+# TODO this can probably be cleaned up
+      self.state += 1
+      if self.state == 1:
+        return ("eval", context, self.base_expression)
+      elif self.state == 2:
+        self.evaluated_base = sub_value
+        if not isinstance(self.evaluated_base, Subscriptable):
+          raise TypeError("Attempted slice of non-subscriptable type")
+        if self.startindex_expression:
+          return ("eval", context, self.startindex_expression)
+        elif self.endindex_expression:
+          return ("eval", context, self.endindex_expression)
+        else:
+          return ("result", None, self)
+      elif self.state == 3:
         try:
-            if self.startindex_expression:
-                self.startindex = int(self.startindex_expression.Eval(context).num)
+          if self.startindex_expression:
+            self.startindex = int(sub_value.num)
             if self.endindex_expression:
-                self.endindex = int(self.endindex_expression.Eval(context).num)
+              return ("eval", context, self.endindex_expression)
+            else:
+              return ("result", None, self)
+          elif self.endindex_expression:
+            self.endindex = int(sub_value.num)
+            return ("result", None, self)
         except:
-            raise TypeError("Subscripts must be integers")
+          raise TypeError("Subscripts must be integers")
+      elif self.state == 4:
+        try:
+          if self.endindex_expression:
+            self.endindex = int(sub_value.num)
+            return ("result", None, self)
+        except:
+          raise TypeError("Subscripts must be integers")
+
 
     def Get(self, context):
-        self.Evaluate(context)
         return self.evaluated_base.Slice(self.startindex, self.endindex)
 
     def Set(self, val, context):
-        self.Evaluate(context)
         self.evaluated_base.SetSlice(self.startindex, self.endindex, val)
 
 
 class WholeRangeReference(object):
-    def __init__(self, expression):
-        self.expression = expression
+  def __init__(self, expression):
+    self.expression = expression
+    self.state = 0
 
-    def Get(self, context):
-        evaluated_base = self.expression.Eval(context)
-        return evaluated_base.Slice()
+  def Reset(self):
+    self.state = 0
+    self.expression.Reset()
+
+  def Eval(self, context, sub_value):
+    self.state += 1
+    if self.state == 1:
+      return ("eval", context, self.expression)
+    else:
+      self.evaled_base = sub_value
+      return ("result", None, self)
+
+  def Get(self, context):
+    return self.evaled_base.Slice()
 

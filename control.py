@@ -15,6 +15,7 @@ class IfElseStatement(Expr):
 
     def Eval(self, context, sub_value):
       if sub_value and sub_value.IsTruthy():
+        print "if tailcall"
         return ("tailcall", context, self.conditionals[self.state - 1][1])
       elif self.state < len(self.conditionals):
         self.state += 1

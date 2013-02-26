@@ -323,7 +323,12 @@ class RefAccess(Expr):
     self.ref.Reset()
 
   def Eval(self, context, sub_value):
-    return ("result", None, self.ref.Get(context))
+    self.state += 1
+    if self.state == 1:
+      return ("eval", context, self.ref)
+    else:
+      self.evaled_ref = sub_value
+      return ("result", None, self.evaled_ref.Get(context))
 
   def __str__(self):
     return str(self.ref)

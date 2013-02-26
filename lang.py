@@ -481,7 +481,7 @@ def p_expression_string(p):
 
 def p_else_if_chain_else_end(p):
     "else_if_chain : ELSE block_statement"
-    p[0] = [(Boolean(True), p[2])]
+    p[0] = [(Bool(True), p[2])]
 
 def p_else_if_chain_else_if_end(p):
     "else_if_chain : ELSE IF LPAREN expression RPAREN block_statement"
