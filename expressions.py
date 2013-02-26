@@ -16,10 +16,14 @@ class OpEqualsExpr(Expr):
     self.reference = reference
     self.value_expression = value_expression
 
+  def Reset(self):
+    self.reference.Reset()
+    self.value_expression.Reset()
+
   def Eval(self, context, sub_value):
     old_value = RefAccess(self.reference)
     new_value = self.op(old_value, self.value_expression)
-    return AssignExpr(self.reference, new_value).Eval(context)
+    return ("tailcall", context, AssignExpr(self.reference, new_value))
 
 
 class InExpr(Value):

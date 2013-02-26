@@ -1,5 +1,5 @@
 class Expr(object):
-  def Eval(self, context):
+  def Eval(self, context, sub_value):
     raise NotImplementedError(self.__class__.__name__ + ' forgot to'
             'implement Eval()')
 
@@ -8,6 +8,11 @@ class Value(Expr):
   overridden)'''
   def Eval(self, context, sub_value):
     return ("result", None, self)
+ 
+  def Reset(self):
+    '''Correspondingly, there is a Reset() method which need do nothing for a
+    value.'''
+    pass
 
   def IsTruthy(self):
     raise NotImplementedError

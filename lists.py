@@ -2,15 +2,29 @@ from expressions_base import Expr
 from ranges import Subscriptable
 
 class ListExpr(Expr):
-    '''An expression which when evaluated yields a list.'''
+  '''An expression which when evaluated yields a list.'''
 
-    def __init__(self, element_expressions):
-        Expr.__init__(self)
-        self.element_expressions = element_expressions
+  def __init__(self, element_expressions):
+    Expr.__init__(self)
+    self.element_expressions = element_expressions
+    self.state = 0
+    self.evaled_exprs = []
 
-    def Eval(self, context):
-        evaluated_elements = [e.Eval(context) for e in self.element_expressions]
-        return List(evaluated_elements)
+  def Reset(self):
+    self.state = 0
+    self.evaled_exprs = []
+    for expr in self.element_expressions:
+      expr.Reset()
+
+  def Eval(self, context, sub_value):
+    self.state += 1
+    if self.state <= len(self.element_expressions):
+      if self.state > 1:
+        self.evaled_exprs.append(sub_value)
+      return ("eval", context, self.element_expressions[self.state - 1])
+    elif self.element_expressions:
+      self.evaled_exprs.append(sub_value)
+      return ("result", None, List(self.evaled_exprs))
 
 
 class List(Subscriptable):

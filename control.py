@@ -7,7 +7,7 @@ class IfElseStatement(Expr):
       self.state = 0
 
     def Reset(self):
-# TODO only reset the things which we have evaled
+    # TODO only reset the things which we have evaled
       self.state = 0
       for hypothesis, statement in self.conditionals:
         hypothesis.Reset()
@@ -23,14 +23,25 @@ class IfElseStatement(Expr):
 
 class WhileStatement(Expr):
 
-    def __init__(self, predicate, body):
-        self.pred = predicate
-        self.body = body
+  def __init__(self, predicate, body):
+    self.pred = predicate
+    self.body = body
+    self.state = 0
 
-    def Eval(self, context):
-        evaled_pred = self.pred.Eval(context)
-        while evaled_pred.IsTruthy():
-            self.body.Eval(context)
-            evaled_pred = self.pred.Eval(context)
-        return Undefined()
+  def Reset(self):
+    self.state = 0
+    self.pred.Reset()
+    self.body.Reset()
+
+  def Eval(self, context, sub_value):
+    self.state = 1 - self.state
+    if self.state == 1:
+      self.pred.Reset()
+      return ("eval", context, self.pred)
+    else:
+      if sub_value.IsTruthy():
+        self.body.Reset()
+        return ("eval", context, self.body)
+      else:
+        return ("result", None, Undefined())
 

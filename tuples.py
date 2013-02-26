@@ -6,9 +6,10 @@ class TupleExpression(Expr):
     def __init__(self, contents):
         self.contents = contents
 
-    def Eval(self, context):
-        evaled_contents = [v.Eval(context) for v in self.contents]
-        return Tuple(evaled_contents)
+    def Eval(self, context, sub_value):
+      print "wah"
+      evaled_contents = [v.Eval(context) for v in self.contents]
+      return Tuple(evaled_contents)
 
 class Tuple(Subscriptable):
     def __init__(self, contents):

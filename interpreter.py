@@ -7,7 +7,6 @@ def evaluate(expr, context):
   exprStack = [(expr, context)]
   stackFrameTops = []
   if isinstance(expr, FunctionCall):
-    print "making new stack frame"
     stackFrameTops.append(0)
   sub_value = None
   while exprStack:
@@ -21,7 +20,6 @@ def evaluate(expr, context):
     elif action == "eval":
       exprStack.append((sub_value, context))
       if isinstance(sub_value, FunctionCall):
-        print "new stack frame!"
         stackFrameTops.append(len(exprStack))
       sub_value = None # new sub-expressions don't need subvalues
     elif action == "tailcall":

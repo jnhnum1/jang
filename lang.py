@@ -606,7 +606,7 @@ if __name__ == '__main__':
             with open(filename) as jang_file:
                 statements = yacc.parse(jang_file.read())
                 for statement in statements:
-                    statement.Eval(context)
+                    interpreter.evaluate(statement, context)
     else:
         # REPL
         import cPickle as pickle
